@@ -114,8 +114,8 @@ function Bridge({ to, from }) {
         </button>
       </div>
       <p className="text-center m-0">
-        Select the network and move your <span className="purple">CSD</span> to
-        your preferred one
+        Select the network and move your <span className="purple">TOKENS</span>{" "}
+        to your preferred one
       </p>
       <div className="networks-info">
         <div className="from-network">
