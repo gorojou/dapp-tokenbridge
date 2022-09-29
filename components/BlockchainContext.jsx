@@ -25,6 +25,7 @@ export function BlockchainContext({ children }) {
     {
       name: "Binance Smart Chain",
       logo: bnb,
+      balance: "0.0000",
       byteCode: "0x61",
       proxy: "0x35120EcE61fCc1c68518BC426005058D2c249EE5",
       bridge: "0x92B71EaE998148577882f0978e21b6649EdCc9Fb",
@@ -35,28 +36,33 @@ export function BlockchainContext({ children }) {
     {
       name: "ETH Mainnet",
       logo: eth,
+      balance: "0.0000",
       byteCode: "0x3",
       proxy: "0x6202D3F88499684e10aC31FCAC0CE7dfA359CFD5",
       bridge: "0x86822D0f6281a159356C77fcDf0228C7d07E317C",
-      provider: "https://ropsten.infura.io/v3/04bfa7d48b3e4d0e87bf5c8c7e15b4c3",
+      provider: "https://ropsten.infura.io/v3/7641ec487ab942a0b01cc5a2d8f02e9d",
       bridgeAbi: contracts.BridgeAbi,
       proxyAbi: contracts.Contract677TokenEth,
     },
     {
       name: "Fantom",
       logo: phantom,
+      balance: "0.0000",
     },
     {
       name: "Avalanche",
       logo: avalanche,
+      balance: "0.0000",
     },
     {
       name: "Matic",
       logo: matic,
+      balance: "0.0000",
     },
     {
       name: "Tron",
       logo: tron,
+      balance: "0.0000",
     },
   ];
 
@@ -85,7 +91,7 @@ export function BlockchainContext({ children }) {
     walletconnect: {
       package: WalletConnectProvider, // required
       options: {
-        infuraId: "04bfa7d48b3e4d0e87bf5c8c7e15b4c3", // Required
+        infuraId: "7641ec487ab942a0b01cc5a2d8f02e9d", // Required
         network: "ropsten",
         qrcodeModalOptions: {
           mobileLinks: [
@@ -118,7 +124,7 @@ export function BlockchainContext({ children }) {
       setInstance(instance);
       setProvider(provider);
       setAccount(account);
-      setBalances(await getBalance(net, account));
+      await getBalance(net, account);
     } catch (err) {
       setMessage("Please Connect your wallet");
       console.log(err);
@@ -127,35 +133,48 @@ export function BlockchainContext({ children }) {
 
   const getBalance = async (contract, account) => {
     if (!account) return { from: "0.0000", to: "0.0000" };
-    setBalances({
-      from: "Loading",
-      to: "Loading",
+    setNet({
+      from: { ...net.from, balance: "Loading" },
+      to: { ...net.to, balance: "Loading" },
     });
-    const providerTo = new ethers.providers.StaticJsonRpcProvider(
-      contract.to.provider
-    );
-    const providerFrom = new ethers.providers.StaticJsonRpcProvider(
-      contract.from.provider
-    );
-    const proxyContractTo = await new ethers.Contract(
-      contract.to.proxy,
-      contract.to.proxyAbi,
-      providerTo
-    );
-    const proxyContractFrom = await new ethers.Contract(
-      contract.from.proxy,
-      contract.from.proxyAbi,
-      providerFrom
-    );
-    const balance = {
-      from: parseFloat(
+    try {
+      const providerTo = new ethers.providers.StaticJsonRpcProvider(
+        contract.to.provider
+      );
+      const providerFrom = new ethers.providers.StaticJsonRpcProvider(
+        contract.from.provider
+      );
+      const proxyContractTo = await new ethers.Contract(
+        contract.to.proxy,
+        contract.to.proxyAbi,
+        providerTo
+      );
+      const proxyContractFrom = await new ethers.Contract(
+        contract.from.proxy,
+        contract.from.proxyAbi,
+        providerFrom
+      );
+      const from = parseFloat(
         ethers.utils.formatEther(await proxyContractFrom.balanceOf(account[0]))
-      ).toFixed(4),
-      to: parseFloat(
+      ).toFixed(4);
+      const to = parseFloat(
         ethers.utils.formatEther(await proxyContractTo.balanceOf(account[0]))
-      ).toFixed(4),
-    };
-    return balance;
+      ).toFixed(4);
+      setNet({
+        from: {
+          ...net.from,
+          balance: from,
+        },
+        to: {
+          ...net.to,
+          balance: to,
+        },
+      });
+    } catch (err) {
+      setMessage("Cannot retrieve balance");
+      console.log(err);
+      return;
+    }
   };
 
   //Update user's metamask network

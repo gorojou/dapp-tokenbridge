@@ -20,6 +20,7 @@ function Bridge({ to, from }) {
     setLocked,
     setMessage,
     getBalance,
+    setBalances,
     balances,
   } = useBlockChainContext();
 
@@ -49,6 +50,8 @@ function Bridge({ to, from }) {
       setLoading(false);
       setLocked(false);
       setMessage("All done!");
+      await getBalance(net, account);
+      handleChange({ target: { value: 0 } });
     } catch (err) {
       setMessage(err);
       setLoading(false);
@@ -58,10 +61,10 @@ function Bridge({ to, from }) {
 
   useEffect(() => {
     const app = async () => {
-      if (account) getBalance(net, account);
+      if (account) await getBalance(net, account);
     };
     return app;
-  }, [net, account]);
+  }, [account]);
 
   useEffect(() => {
     setNet({ from: nets[from], to: nets[to] });
@@ -78,7 +81,7 @@ function Bridge({ to, from }) {
         title={account ? account : "Connect Wallet"}
         className="button-connect-wallet"
       >
-        <button onClick={!account ? connectWeb3Modal : ""}>
+        <button onClick={!account ? connectWeb3Modal : () => {}}>
           <div className="connect-wallet-text">
             {account ? account : "Connect Wallet"}
           </div>
@@ -122,7 +125,7 @@ function Bridge({ to, from }) {
                 <span className="material-icons">expand_more</span>
               </h3>
             </div>
-            <h5 className="grey right">Balance: {balances.from}</h5>
+            <h5 className="grey right">Balance: {net.from.balance}</h5>
           </div>
           amount:
           <input
@@ -189,7 +192,7 @@ function Bridge({ to, from }) {
                 <span className="material-icons">expand_more</span>
               </h3>
             </div>
-            <h5 className="grey right">Balance: {balances.to}</h5>
+            <h5 className="grey right">Balance: {net.to.balance}</h5>
           </div>
           <input
             type="text"
