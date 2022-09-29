@@ -28,7 +28,7 @@ export function BlockchainContext({ children }) {
       byteCode: "0x61",
       proxy: "0x35120EcE61fCc1c68518BC426005058D2c249EE5",
       bridge: "0x92B71EaE998148577882f0978e21b6649EdCc9Fb",
-      provider: "https://data-seed-prebsc-1-s1.binance.org:8545",
+      provider: "https://data-seed-prebsc-1-s1.binance.org:8545/",
       bridgeAbi: contracts.BridgeAbi,
       proxyAbi: contracts.Contract677TokenEth,
     },
@@ -38,8 +38,7 @@ export function BlockchainContext({ children }) {
       byteCode: "0x3",
       proxy: "0x6202D3F88499684e10aC31FCAC0CE7dfA359CFD5",
       bridge: "0x86822D0f6281a159356C77fcDf0228C7d07E317C",
-      provider:
-        "wss://ropsten.infura.io/ws/v3/04bfa7d48b3e4d0e87bf5c8c7e15b4c3",
+      provider: "https://ropsten.infura.io/v3/04bfa7d48b3e4d0e87bf5c8c7e15b4c3",
       bridgeAbi: contracts.BridgeAbi,
       proxyAbi: contracts.Contract677TokenEth,
     },
@@ -71,6 +70,10 @@ export function BlockchainContext({ children }) {
   const [amount, setamount] = useState(0.0);
   const [locked, setLocked] = useState(false);
   const [message, setMessage] = useState();
+  const [balances, setBalances] = useState({
+    from: "0.000",
+    to: "0.000",
+  });
   //Setting web3modal
   const providerOptions = {
     metamask: {
@@ -111,13 +114,48 @@ export function BlockchainContext({ children }) {
       web3Modal.clearCachedProvider();
       const instance = await web3Modal.connect();
       const provider = new Web3(instance);
+      const account = await provider.eth.getAccounts();
       setInstance(instance);
       setProvider(provider);
-      setAccount(await provider.eth.getAccounts());
+      setAccount(account);
+      setBalances(await getBalance(net, account));
     } catch (err) {
       setMessage("Please Connect your wallet");
       console.log(err);
     }
+  };
+
+  const getBalance = async (contract, account) => {
+    if (!account) return { from: "0.0000", to: "0.0000" };
+    setBalances({
+      from: "Loading",
+      to: "Loading",
+    });
+    const providerTo = new ethers.providers.StaticJsonRpcProvider(
+      contract.to.provider
+    );
+    const providerFrom = new ethers.providers.StaticJsonRpcProvider(
+      contract.from.provider
+    );
+    const proxyContractTo = await new ethers.Contract(
+      contract.to.proxy,
+      contract.to.proxyAbi,
+      providerTo
+    );
+    const proxyContractFrom = await new ethers.Contract(
+      contract.from.proxy,
+      contract.from.proxyAbi,
+      providerFrom
+    );
+    const balance = {
+      from: parseFloat(
+        ethers.utils.formatEther(await proxyContractFrom.balanceOf(account[0]))
+      ).toFixed(4),
+      to: parseFloat(
+        ethers.utils.formatEther(await proxyContractTo.balanceOf(account[0]))
+      ).toFixed(4),
+    };
+    return balance;
   };
 
   //Update user's metamask network
@@ -183,6 +221,7 @@ export function BlockchainContext({ children }) {
   return (
     <BCContext.Provider
       value={{
+        instance,
         net,
         nets,
         handleChange,
@@ -196,6 +235,9 @@ export function BlockchainContext({ children }) {
         updateNet,
         setMessage,
         checkForWeb3,
+        getBalance,
+        setBalances,
+        balances,
       }}
     >
       {children}
@@ -216,7 +258,7 @@ const Modal = ({ message, setMessage }) => {
       setTimeout(() => {
         setAnimation(true);
         goBack();
-      }, 3000);
+      }, 4000);
     }
   }, [message]);
 

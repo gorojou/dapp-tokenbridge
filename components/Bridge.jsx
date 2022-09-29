@@ -3,7 +3,6 @@ import { Bridge677 } from "../assets/js/bridge-677";
 import { useBlockChainContext } from "./BlockchainContext.jsx";
 import NetList from "./NetList.jsx";
 import Load from "./Load.jsx";
-import { ethers } from "ethers";
 
 function Bridge({ to, from }) {
   const [toNetwork, setToNetwork] = useState({});
@@ -20,11 +19,12 @@ function Bridge({ to, from }) {
     checkForWeb3,
     setLocked,
     setMessage,
+    getBalance,
+    balances,
   } = useBlockChainContext();
 
   const [netList, setNetList] = useState(0);
   const [loading, setLoading] = useState(false);
-
   useEffect(() => {
     nets.map((index) => {
       if (net.from.name !== index.name) setToNetwork({ ...index });
@@ -49,44 +49,19 @@ function Bridge({ to, from }) {
       setLoading(false);
       setLocked(false);
       setMessage("All done!");
-      //<<<<<<<<<<<<OLD>>>>>>>>>>
-      // if (net.from.name == "ETH Mainnet") {
-      //   const { ethBridge } = Ethbridge(amount);
-      //   const { ethTransfer } = Ethtransfer(amount)
-      //     .then(() => {
-      //       setLoading(false);
-      //       setLocked(false);
-      //     })
-      //     .catch((err) => {
-      //       setLoading(false);
-      //       setLocked(false);
-      //       setMessage("Something Went Wrong");
-      //     });
-
-      //   await ethBridge;
-      //   await ethTransfer;
-      // } else {
-      //   const { bscBridge } = Bscbridge(amount);
-      //   const { bscTransfer } = Bsctransfer(amount)
-      //     .then(() => {
-      //       setLoading(false);
-      //       setLocked(false);
-      //     })
-      //     .catch(() => {
-      //       setLoading(false);
-      //       setLocked(false);
-      //       setMessage("Something Went Wrong");
-      //     });
-
-      //   await bscBridge;
-      //   await bscTransfer;
-      // }
     } catch (err) {
       setMessage(err);
       setLoading(false);
       setLocked(false);
     }
   }
+
+  useEffect(() => {
+    const app = async () => {
+      if (account) getBalance(net, account);
+    };
+    return app;
+  }, [net, account]);
 
   useEffect(() => {
     setNet({ from: nets[from], to: nets[to] });
@@ -147,7 +122,7 @@ function Bridge({ to, from }) {
                 <span className="material-icons">expand_more</span>
               </h3>
             </div>
-            <h5 className="grey right">Balance: 0.000</h5>
+            <h5 className="grey right">Balance: {balances.from}</h5>
           </div>
           amount:
           <input
@@ -214,7 +189,7 @@ function Bridge({ to, from }) {
                 <span className="material-icons">expand_more</span>
               </h3>
             </div>
-            <h5 className="grey right">Balance: 0.000</h5>
+            <h5 className="grey right">Balance: {balances.to}</h5>
           </div>
           <input
             type="text"
